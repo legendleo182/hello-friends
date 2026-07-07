@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Pencil, Check, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Settings — RentBook" }] }),
@@ -25,6 +25,34 @@ function SettingsPage() {
 
   const [newProp, setNewProp] = useState({ name: "", address: "" });
   const [newRoom, setNewRoom] = useState({ property_id: "", room_number: "", floor: "" });
+  const [editProp, setEditProp] = useState<{ id: string; name: string; address: string } | null>(null);
+  const [editRoom, setEditRoom] = useState<{ id: string; room_number: string; floor: string } | null>(null);
+
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ["properties-settings"] });
+    qc.invalidateQueries({ queryKey: ["properties"] });
+  };
+
+  const saveProp = async () => {
+    if (!editProp) return;
+    const { error } = await supabase.from("properties")
+      .update({ name: editProp.name, address: editProp.address }).eq("id", editProp.id);
+    if (error) return toast.error(error.message);
+    toast.success("Property updated"); setEditProp(null); refresh();
+  };
+  const saveRoom = async () => {
+    if (!editRoom) return;
+    const { error } = await supabase.from("rooms")
+      .update({ room_number: editRoom.room_number, floor: editRoom.floor || null }).eq("id", editRoom.id);
+    if (error) return toast.error(error.message);
+    toast.success("Room updated"); setEditRoom(null); refresh();
+  };
+  const deleteRoom = async (id: string) => {
+    if (!confirm("Delete this room?")) return;
+    const { error } = await supabase.from("rooms").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    refresh();
+  };
 
   const addProp = useMutation({
     mutationFn: async () => {
@@ -85,19 +113,55 @@ function SettingsPage() {
                 {properties.map((p: any) => (
                   <div key={p.id} className="border border-border/60 rounded-md p-3">
                     <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-medium">{p.name}</div>
-                        <div className="text-xs text-muted-foreground">{p.address || "No address"}</div>
+                      {editProp && editProp.id === p.id ? (
+                        <div className="flex-1 grid grid-cols-2 gap-2 pr-2">
+                          <Input value={editProp.name} onChange={(e) => setEditProp(editProp ? { ...editProp, name: e.target.value } : null)} placeholder="Name" />
+                          <Input value={editProp.address} onChange={(e) => setEditProp(editProp ? { ...editProp, address: e.target.value } : null)} placeholder="Address" />
+                        </div>
+                      ) : (
+                        <div>
+                          <div className="font-medium">{p.name}</div>
+                          <div className="text-xs text-muted-foreground">{p.address || "No address"}</div>
+                        </div>
+                      )}
+                      <div className="flex gap-1">
+                        {editProp?.id === p.id ? (
+                          <>
+                            <Button size="icon" variant="ghost" onClick={saveProp}><Check className="size-4" /></Button>
+                            <Button size="icon" variant="ghost" onClick={() => setEditProp(null)}><X className="size-4" /></Button>
+                          </>
+                        ) : (
+                          <Button size="icon" variant="ghost" onClick={() => setEditProp({ id: p.id, name: p.name, address: p.address ?? "" })}>
+                            <Pencil className="size-4" />
+                          </Button>
+                        )}
+                        <Button size="icon" variant="ghost" onClick={async () => {
+                          if (!confirm("Delete property and all its rooms?")) return;
+                          await supabase.from("properties").delete().eq("id", p.id);
+                          refresh();
+                        }}><Trash2 className="size-4 text-destructive" /></Button>
                       </div>
-                      <Button size="icon" variant="ghost" onClick={async () => {
-                        if (!confirm("Delete property and all its rooms?")) return;
-                        await supabase.from("properties").delete().eq("id", p.id);
-                        qc.invalidateQueries({ queryKey: ["properties-settings"] });
-                      }}><Trash2 className="size-4 text-destructive" /></Button>
                     </div>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {p.rooms.map((r: any) => (
-                        <span key={r.id} className="text-xs rounded-md bg-muted px-2 py-1">{r.room_number}{r.floor ? ` · F${r.floor}` : ""}</span>
+                        editRoom && editRoom.id === r.id ? (
+                          <span key={r.id} className="flex items-center gap-1 rounded-md bg-muted px-2 py-1">
+                            <Input className="h-6 w-16 text-xs" value={editRoom.room_number} onChange={(e) => setEditRoom(editRoom ? { ...editRoom, room_number: e.target.value } : null)} />
+                            <Input className="h-6 w-14 text-xs" placeholder="Floor" value={editRoom.floor} onChange={(e) => setEditRoom(editRoom ? { ...editRoom, floor: e.target.value } : null)} />
+                            <button onClick={saveRoom} className="text-primary"><Check className="size-3.5" /></button>
+                            <button onClick={() => setEditRoom(null)}><X className="size-3.5" /></button>
+                          </span>
+                        ) : (
+                          <span key={r.id} className="group text-xs rounded-md bg-muted px-2 py-1 flex items-center gap-1.5">
+                            {r.room_number}{r.floor ? ` · F${r.floor}` : ""}
+                            <button onClick={() => setEditRoom({ id: r.id, room_number: r.room_number, floor: r.floor ?? "" })} className="opacity-60 hover:opacity-100">
+                              <Pencil className="size-3" />
+                            </button>
+                            <button onClick={() => deleteRoom(r.id)} className="opacity-60 hover:opacity-100">
+                              <Trash2 className="size-3 text-destructive" />
+                            </button>
+                          </span>
+                        )
                       ))}
                       {p.rooms.length === 0 && <span className="text-xs text-muted-foreground">No rooms</span>}
                     </div>

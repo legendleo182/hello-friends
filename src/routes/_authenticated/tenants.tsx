@@ -11,7 +11,7 @@ import { StatusDot, computeTenantStatus } from "@/components/status-dot";
 import { TenantFormSheet } from "@/components/tenant-form";
 import { fetchTenants, currentMonthRent } from "@/lib/queries";
 import { inr } from "@/lib/format";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Pencil } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/tenants")({
   head: () => ({ meta: [{ title: "Tenants — RentBook" }] }),
@@ -22,6 +22,7 @@ function TenantsPage() {
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<string>("all");
   const [openForm, setOpenForm] = useState(false);
+  const [editTenant, setEditTenant] = useState<any>(null);
 
   const { data: tenants = [] } = useQuery({ queryKey: ["tenants"], queryFn: fetchTenants });
   const { data: rent = [] } = useQuery({ queryKey: ["rent", "current"], queryFn: currentMonthRent });
@@ -93,15 +94,24 @@ function TenantsPage() {
                 amountDue: totalDue, amountPaid: paid,
               });
               return (
-                <Link key={t.id} to="/tenants/$id" params={{ id: t.id }}>
-                  <Card className="p-4 hover:border-primary/60 transition-colors h-full">
+                <Card key={t.id} className="p-4 hover:border-primary/60 transition-colors h-full relative">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="absolute top-2 right-2 size-7"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setEditTenant(t); }}
+                    aria-label="Edit tenant"
+                  >
+                    <Pencil className="size-3.5" />
+                  </Button>
+                  <Link to="/tenants/$id" params={{ id: t.id }} className="block">
                     <div className="flex items-start gap-3">
                       <Avatar className="size-11">
                         <AvatarImage src={t.photo_url ?? undefined} />
                         <AvatarFallback className="bg-accent text-accent-foreground">{t.full_name?.[0] ?? "?"}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center justify-between gap-2 pr-8">
                           <div className="font-medium truncate">{t.full_name}</div>
                           <StatusDot status={status} />
                         </div>
@@ -115,14 +125,15 @@ function TenantsPage() {
                       <Info label="Rent" value={inr(t.monthly_rent)} />
                       <Info label="This month" value={r ? `${inr(paid)} / ${inr(totalDue)}` : "—"} />
                     </div>
-                  </Card>
-                </Link>
+                  </Link>
+                </Card>
               );
             })}
           </div>
         )}
       </div>
       <TenantFormSheet open={openForm} onOpenChange={setOpenForm} />
+      <TenantFormSheet open={!!editTenant} onOpenChange={(v) => !v && setEditTenant(null)} tenant={editTenant} />
     </div>
   );
 }
