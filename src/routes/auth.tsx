@@ -35,6 +35,17 @@ function AuthPage() {
     nav({ to: "/dashboard", replace: true });
   }
 
+  async function forgotPassword() {
+    if (!email) return toast.error("Enter your email first");
+    setBusy(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Password reset link sent. Check your email.");
+  }
+
   async function signUp(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -83,6 +94,9 @@ function AuthPage() {
                   <div className="space-y-2"><Label>Email</Label><Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></div>
                   <div className="space-y-2"><Label>Password</Label><Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} /></div>
                   <Button type="submit" className="w-full" disabled={busy}>{busy ? "Signing in…" : "Sign in"}</Button>
+                  <button type="button" onClick={forgotPassword} className="text-xs text-muted-foreground hover:text-foreground underline w-full text-center">
+                    Forgot password?
+                  </button>
                 </form>
               </TabsContent>
               <TabsContent value="signup">
