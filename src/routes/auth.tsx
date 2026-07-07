@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Home } from "lucide-react";
+import { lovable } from "@/integrations/lovable";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "Sign in — RentBook" }, { name: "robots", content: "noindex" }] }),
@@ -19,6 +20,17 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+
+  async function signInWithGoogle() {
+    setBusy(true);
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin,
+    });
+    if (result.redirected) return;
+    setBusy(false);
+    if (result.error) return toast.error(result.error.message);
+    nav({ to: "/dashboard", replace: true });
+  }
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -73,6 +85,14 @@ function AuthPage() {
             <CardDescription>Sign in to your landlord workspace.</CardDescription>
           </CardHeader>
           <CardContent>
+            <Button type="button" variant="outline" className="w-full mb-4" onClick={signInWithGoogle} disabled={busy}>
+              <svg className="mr-2 size-4" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 10.2v3.9h5.5c-.24 1.4-1.72 4.1-5.5 4.1-3.3 0-6-2.74-6-6.1s2.7-6.1 6-6.1c1.88 0 3.14.8 3.86 1.5l2.63-2.53C16.9 3.36 14.7 2.4 12 2.4 6.86 2.4 2.7 6.56 2.7 12S6.86 21.6 12 21.6c6.94 0 9.3-4.87 9.3-8.34 0-.56-.06-.98-.14-1.4H12z"/></svg>
+              Continue with Google
+            </Button>
+            <div className="relative mb-4">
+              <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+              <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">Or</span></div>
+            </div>
             <Tabs defaultValue="signin">
               <TabsList className="grid grid-cols-2 w-full">
                 <TabsTrigger value="signin">Sign in</TabsTrigger>
