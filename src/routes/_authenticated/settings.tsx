@@ -113,10 +113,10 @@ function SettingsPage() {
                 {properties.map((p: any) => (
                   <div key={p.id} className="border border-border/60 rounded-md p-3">
                     <div className="flex items-center justify-between">
-                      {editProp?.id === p.id ? (
+                      {editProp && editProp.id === p.id ? (
                         <div className="flex-1 grid grid-cols-2 gap-2 pr-2">
-                          <Input value={editProp.name} onChange={(e) => setEditProp({ ...editProp, name: e.target.value })} placeholder="Name" />
-                          <Input value={editProp.address} onChange={(e) => setEditProp({ ...editProp, address: e.target.value })} placeholder="Address" />
+                          <Input value={editProp.name} onChange={(e) => setEditProp(editProp ? { ...editProp, name: e.target.value } : null)} placeholder="Name" />
+                          <Input value={editProp.address} onChange={(e) => setEditProp(editProp ? { ...editProp, address: e.target.value } : null)} placeholder="Address" />
                         </div>
                       ) : (
                         <div>
@@ -144,10 +144,10 @@ function SettingsPage() {
                     </div>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {p.rooms.map((r: any) => (
-                        editRoom?.id === r.id ? (
+                        editRoom && editRoom.id === r.id ? (
                           <span key={r.id} className="flex items-center gap-1 rounded-md bg-muted px-2 py-1">
-                            <Input className="h-6 w-16 text-xs" value={editRoom.room_number} onChange={(e) => setEditRoom({ ...editRoom, room_number: e.target.value })} />
-                            <Input className="h-6 w-14 text-xs" placeholder="Floor" value={editRoom.floor} onChange={(e) => setEditRoom({ ...editRoom, floor: e.target.value })} />
+                            <Input className="h-6 w-16 text-xs" value={editRoom.room_number} onChange={(e) => setEditRoom(editRoom ? { ...editRoom, room_number: e.target.value } : null)} />
+                            <Input className="h-6 w-14 text-xs" placeholder="Floor" value={editRoom.floor} onChange={(e) => setEditRoom(editRoom ? { ...editRoom, floor: e.target.value } : null)} />
                             <button onClick={saveRoom} className="text-primary"><Check className="size-3.5" /></button>
                             <button onClick={() => setEditRoom(null)}><X className="size-3.5" /></button>
                           </span>
