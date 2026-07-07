@@ -165,7 +165,7 @@ function RentRow({ r, tenantId, onChange }: { r: any; tenantId: string; onChange
       const amt = Number(amount);
       if (amt <= 0) throw new Error("Enter an amount");
       const { error } = await supabase.from("payments").insert({
-        rent_record_id: r.id, tenant_id: tenantId, amount: amt, mode, transaction_id: txn || null, remarks: remarks || null, payment_date: date,
+        rent_record_id: r.id, tenant_id: tenantId, amount: amt, mode: mode as any, transaction_id: txn || null, remarks: remarks || null, payment_date: date,
       });
       if (error) throw error;
       await supabase.from("timeline_events").insert({

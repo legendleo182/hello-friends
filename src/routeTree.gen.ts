@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedTenantsRouteImport } from './routes/_authenticated/tenants'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedTenantsIdRouteImport } from './routes/_authenticated/tenants.$id'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -39,18 +40,25 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTenantsIdRoute = AuthenticatedTenantsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AuthenticatedTenantsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/tenants': typeof AuthenticatedTenantsRoute
+  '/tenants': typeof AuthenticatedTenantsRouteWithChildren
+  '/tenants/$id': typeof AuthenticatedTenantsIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/tenants': typeof AuthenticatedTenantsRoute
+  '/tenants': typeof AuthenticatedTenantsRouteWithChildren
+  '/tenants/$id': typeof AuthenticatedTenantsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -58,13 +66,14 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/_authenticated/tenants': typeof AuthenticatedTenantsRoute
+  '/_authenticated/tenants': typeof AuthenticatedTenantsRouteWithChildren
+  '/_authenticated/tenants/$id': typeof AuthenticatedTenantsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/dashboard' | '/tenants'
+  fullPaths: '/' | '/auth' | '/dashboard' | '/tenants' | '/tenants/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/dashboard' | '/tenants'
+  to: '/' | '/auth' | '/dashboard' | '/tenants' | '/tenants/$id'
   id:
     | '__root__'
     | '/'
@@ -72,6 +81,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/dashboard'
     | '/_authenticated/tenants'
+    | '/_authenticated/tenants/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -117,17 +127,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/tenants/$id': {
+      id: '/_authenticated/tenants/$id'
+      path: '/$id'
+      fullPath: '/tenants/$id'
+      preLoaderRoute: typeof AuthenticatedTenantsIdRouteImport
+      parentRoute: typeof AuthenticatedTenantsRoute
+    }
   }
 }
 
+interface AuthenticatedTenantsRouteChildren {
+  AuthenticatedTenantsIdRoute: typeof AuthenticatedTenantsIdRoute
+}
+
+const AuthenticatedTenantsRouteChildren: AuthenticatedTenantsRouteChildren = {
+  AuthenticatedTenantsIdRoute: AuthenticatedTenantsIdRoute,
+}
+
+const AuthenticatedTenantsRouteWithChildren =
+  AuthenticatedTenantsRoute._addFileChildren(AuthenticatedTenantsRouteChildren)
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedTenantsRoute: typeof AuthenticatedTenantsRoute
+  AuthenticatedTenantsRoute: typeof AuthenticatedTenantsRouteWithChildren
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedTenantsRoute: AuthenticatedTenantsRoute,
+  AuthenticatedTenantsRoute: AuthenticatedTenantsRouteWithChildren,
 }
 
 const AuthenticatedRouteRouteWithChildren =
