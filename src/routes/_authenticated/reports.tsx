@@ -75,7 +75,7 @@ function ReportsPage() {
     },
   });
 
-  const rows = data ?? [];
+  const rows = (data ?? []) as Array<Record<string, any>>;
   const filename = `${report}_${monthName(month)}_${year}`;
 
   function exportCSV() {
