@@ -24,21 +24,27 @@ export function TenantFormSheet({
   const [police, setPolice] = useState<File | null>(null);
 
   useEffect(() => {
-    setForm(
-      tenant ?? {
+    if (tenant) {
+      const { rooms, created_at, updated_at, ...rest } = tenant as any;
+      setForm(rest);
+    } else {
+      setForm({
         full_name: "", father_name: "", mobile: "", alt_mobile: "",
         room_id: null, joining_date: new Date().toISOString().slice(0, 10),
         security_deposit: 0, monthly_rent: 0, electricity_rate: 8,
         water_charges: 0, rent_due_day: 5, agreement_expiry: "",
         status: "active", notes: "", telegram_chat_id: "",
-      },
-    );
+      });
+    }
     setPhoto(null); setAadhaar(null); setPolice(null);
   }, [tenant, open]);
 
   const mutate = useMutation({
     mutationFn: async () => {
       const payload: any = { ...form };
+      delete payload.rooms;
+      delete payload.created_at;
+      delete payload.updated_at;
       if (!payload.agreement_expiry) payload.agreement_expiry = null;
       if (!payload.room_id) payload.room_id = null;
       if (photo) payload.photo_url = await uploadFile("tenant-photos", photo, "photos");
